@@ -101,8 +101,8 @@ class PhysicalTopology:
     def get_link_id(self, src: int, dst: int) -> int:
         if self.graph.has_edge(src, dst):
             return self.graph[src][dst]["id"]
-        elif self.graph.has_edge(dst, src):
-            return self.graph[dst][src]["id"]
+        # elif self.graph.has_edge(dst, src):
+        #     return self.graph[dst][src]["id"]
         else:
             raise ValueError(f"No edge between {src} and {dst}")
 
@@ -149,12 +149,7 @@ class PhysicalTopology:
         free_slots = [[True for _ in range(slots)] for _ in range(cores)]
         for core, slot in reserved_slots:
             free_slots[core][slot] = False
-        # print("free_slots", free_slots)
-        # print(len(free_slots[0]))
-        # print(len(free_slots))
         return free_slots
-
-
 
     def are_slots_available(self, src: int, dst: int, slot_list: List[Slot]) -> bool:
         if not self.graph.has_edge(src, dst):

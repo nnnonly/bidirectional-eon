@@ -14,10 +14,10 @@ from src.Event import Event
 from src.FlowArrivalEvent import FlowArrivalEvent
 from src.FlowDepartureEvent import FlowDepartureEvent
 # from src.rsa import *
-# from src.rsa.ImageRCSA import ImageRCSA
-# from src.rsa.FIPP import FIPP
+from src.rsa.ImageRCSA import ImageRCSA
+from src.rsa.FIPP import FIPP
 from src.rsa.PP import PP
-
+from src.rsa.NewRSA import NewRSA
 
 class ControlPlane(ControlPlaneForRSA):
     def __init__(self, xml: ET.Element, event_scheduler: EventScheduler, rsa_module: str, pt: PhysicalTopology,
@@ -35,7 +35,8 @@ class ControlPlane(ControlPlaneForRSA):
             # self.rsa = RSAClass()
             # self.rsa.simulation_interface(xml, pt, vt, self, traffic)
             # self.rsa = ImageRCSA()
-            self.rsa = PP()
+            # self.rsa = NewRSA()
+            self.rsa = FIPP()
             self.rsa.simulation_interface(xml, pt, vt, self, traffic)
         except Exception as e:
             print("Error in ControlPlane: ", e)

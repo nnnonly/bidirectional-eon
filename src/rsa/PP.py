@@ -34,8 +34,8 @@ class PP(RSA):
     def flow_arrival(self, flow: Flow) -> None:
         demand_in_slots = math.ceil(flow.get_rate() / self.pt.get_slot_capacity())
         sub_graphs = self.create_subgraphs_from_slots(demand_in_slots)
-        min_path, min_index, min_weight_path = self.find_shortest_paths(subgraphs=sub_graphs, source=flow.get_source(), destination=flow.get_destination())
-        if min_weight_path != float('inf'):
+        min_path, min_index, min_weight = self.find_shortest_paths(subgraphs=sub_graphs, source=flow.get_source(), destination=flow.get_destination())
+        if min_weight != float('inf'):
             links = [0 for _ in range(len(min_path) - 1)]
             for j in range(0, len(min_path) - 1, 1):
                 links[j] = self.pt.get_link_id(min_path[j], min_path[j + 1])
@@ -97,8 +97,8 @@ class PP(RSA):
                 shortest_paths.append((None, float('inf')))
         if shortest_paths:
             min_index, min_weight_path = min(enumerate(shortest_paths), key=lambda x: x[1][1])
-            min_path, _ = min_weight_path
+            min_path, min_weight = min_weight_path
 
-            return min_path, min_index, min_weight_path
+            return min_path, min_index, min_weight
         else:
             return None, 0, float('inf')

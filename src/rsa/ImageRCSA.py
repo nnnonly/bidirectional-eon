@@ -34,6 +34,7 @@ class ImageRCSA(RSA):
         # k_path = nx.shortest_path(self.graph, flow.get_source(), flow.get_destination())
         # print("k_path: ", k_path)
         k_paths = list(islice(nx.shortest_simple_paths(self.graph, flow.get_source(), flow.get_destination(), weight="weight"), 10))
+        # k_paths = list(nx.k_shortest(self.graph, flow.get_source(), flow.get_destination(), weight="weight"), 10)
         # print("k_paths: ", k_paths)
         # # k_paths = KShortestPaths().dijkstra_k_shortest_paths(self.graph, flow.get_source(), flow.get_destination(), 5)
         spectrum = [[True for _ in range(self.pt.get_num_slots())] for _ in range(self.pt.get_cores())]
