@@ -40,6 +40,9 @@ class PCycle:
     def set_reversed_slots(self, reserved_slots):
         self.reserved_slots = reserved_slots
 
+    def get_reserved_slots(self):
+        return self.reserved_slots
+
     def p_cycle_contains_flow(self, src, dst):
         """
         Check if the P-cycle contains the flow
@@ -74,6 +77,13 @@ class PCycle:
                 if bool(set(lp) & set(new_lp)):
                     return False
             return True
+
+    def get_core_slot_range(self):
+        if not self.slot_list:
+            return None, None, None
+        core = self.slot_list[0].core
+        slots = [s.slot for s in self.slot_list]
+        return core, min(slots), max(slots)
 
     # tao cac set be_protection disjoint voi nhau
     def add_lp_to_be_protected(self, new_lp: List[int]):
