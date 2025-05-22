@@ -1,8 +1,9 @@
 import xml.etree.ElementTree as ET
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict, Tuple, Optional, Set
 import math
 import networkx as nx
 from itertools import islice
+from collections import defaultdict
 
 from src.PCycle import PCycle
 from src.rsa.RSA import RSA
@@ -43,13 +44,10 @@ class NewRSA(RSA):
                             for j in range(len(spectrum[0])):
                                 if spectrum[idx][j] is False:
                                     list_slot.append(Slot(idx, j))
-                        if self.establish_connection(links, list_slot, 0, flow):
-                            return
+
                     else:
                         self.cp.block_flow(flow.get_id())
                         return
-
-
 
         path = self.initialize_fipp(flow.get_source(), flow.get_destination())
         print("flow", flow.get_source(), flow.get_destination())
@@ -71,12 +69,147 @@ class NewRSA(RSA):
     def flow_departure(self, flow):
         pass
 
-    def find_shortest_working_path(self, flow: Flow, spectrum: List[List[bool]]):
+    def initialize_fipp(self, flow: Flow):
+        demand_in_slots = math.ceil(flow.get_rate() / self.pt.get_slot_capacity())
+        path1, path2 = self.get_two_shortest_disjoint_paths(flow)
+        if path1 is None or path2 is None:
+            return None
+        else:
+            spectrum_path_1 = [[True for _ in range(self.pt.get_num_slots())] for _ in range(self.pt.get_cores())]
+            spectrum_path_2 = [[True for _ in range(self.pt.get_num_slots())] for _ in range(self.pt.get_cores())]
+            for i in range(len(path1) - 1):
+                spectrum_path_1 = self.image_and(self.pt.get_spectrum(path1[i], path1[i + 1]), spectrum_path_1, spectrum_path_1)
+            for i in range(len(path2) - 1):
+                spectrum_path_2 = self.image_and(self.pt.get_spectrum(path1[i], path1[i + 1]), spectrum_path_2, spectrum_path_2)
+            spectrum = [[True for _ in range(self.pt.get_num_slots())] for _ in range(self.pt.get_cores())]
+            spectrum = self.image_and(spectrum_path_1, spectrum_path_2, spectrum)
+            check_path, spec, slot_list = self.calculate_slot_range(spectrum, demand_in_slots)
+            if check_path:
+                spectrum_path_1 = self.image_and(spec, spectrum_path_1, spectrum_path_1)
+                check_w_1_path, spec_w_1, slot_list_w_1 = self.calculate_slot_range(spectrum_path_1, demand_in_slots)
+                if check_w_1_path:
+                    links_1 = [0 for _ in range(len(path1) - 1)]
+                    for j in range(0, len(path1) - 1, 1):
+                        links_1[j] = self.pt.get_link_id(path1[j], path1[j + 1])
+                    return True, links_1, slot_list_w_1
+                else:
+                    spectrum_path_2 = self.image_and(spec, spectrum_path_1, spectrum_path_2)
+                    check_w_2_path, spec_w_2, slot_list_w_2 = self.calculate_slot_range(spectrum_path_2,
+                                                                                        demand_in_slots)
+                    if check_w_2_path:
+                        links = [0 for _ in range(len(path2) - 1)]
+                        for j in range(0, len(path2) - 1, 1):
+                            links[j] = self.pt.get_link_id(path2[j], path2[j + 1])
+                        return True, links, slot_list_w_2
+                    else:
+                        return False, None, None
+            return False, None, None
+
+
+    def get_two_shortest_disjoint_paths(self, flow: Flow):
+        try:
+            # Find first shortest path
+            path1 = nx.shortest_path(self.pt.get_graph(), source=flow.get_source(), target=flow.get_destination(), weight=None)
+
+            # Create copy of the graph and remove edges of path1
+            G_copy = self.pt.get_graph().copy()
+            for i in range(len(path1) - 1):
+                u, v = path1[i], path1[i + 1]
+                if G_copy.has_edge(u, v):
+                    G_copy.remove_edge(u, v)
+
+            # Find second shortest path
+            path2 = nx.shortest_path(G_copy, source=flow.get_source(), target=flow.get_destination(), weight=None)
+
+            return path1, path2
+
+        except nx.NetworkXNoPath:
+            return path1, None
+
+        except nx.NodeNotFound:
+            return None, None
+
+
+    def find_shortest_working_path(self, flow: Flow, spectrum: List[List[bool]], pcycle: PCycle):
+        demand_in_slots = math.ceil(flow.get_rate() / self.pt.get_slot_capacity())
         shortest_path = nx.shortest_path(self.graph, source=flow.get_source(), target=flow.get_destination())
         for i in range(len(shortest_path) - 1):
             spectrum = self.image_and(self.pt.get_spectrum(shortest_path[i], shortest_path[i + 1]), spectrum, spectrum)
-        cc = ConnectedComponent()
-        list_of_regions = cc.list_of_regions(spectrum)
+        check_path, spec, slot_list = self.calculate_slot_range(spectrum, demand_in_slots)
+        links = [0 for _ in range(len(shortest_path) - 1)]
+        for j in range(0, len(shortest_path) - 1, 1):
+            links[j] = self.pt.get_link_id(shortest_path[j], shortest_path[j + 1])
+        if check_path:
+            dict_id_links = pcycle.get_id_links()
+            key_set = set(dict_id_links.keys())
+            dict_not_disjoint = {k: v for k, v in dict_id_links.items() if k in key_set}
+            if dict_not_disjoint:
+                sum = demand_in_slots
+                list_disjoint_links = {}
+                for k, v in dict_not_disjoint.items():
+                    for edge in v:
+                        sum += edge.get_fss()
+                    if sum < pcycle.get_reserved_slots():
+                        list_disjoint_links[k] = v
+                if len(list_disjoint_links) == len(dict_id_links.keys()):
+                    return True, shortest_path, links, slot_list
+                else:
+                    backup_paths = self.get_backup_path(flow, pcycle, links)
+                    for k, v in dict_not_disjoint.items():
+                        list_backup_check = []
+                        list_backup_check.append(backup_paths)
+                        for item in v:
+                            list_backup_check.append(item.get_backup_paths())
+                        if len(list_backup_check) == 0:
+                            return False, None, None, None
+            else:
+                return False, None, None, None
+
+
+    def get_backup_path(self, flow: Flow, pcycle: PCycle, working_path: List[int]):
+        graph = nx.Graph()
+        filtered_pcycle = [e for e in working_path if e not in pcycle.get_cycle_links()]
+        for idx in filtered_pcycle:
+            for u, v, data in self.pt.get_graph.edges(data=True):
+                if data.get("id") == idx:
+                    graph.add_edge(u, v, **data)
+        paths = list(nx.all_simple_paths(graph, source=flow.get_source(), target=flow.get_destination()))
+        list_backup_paths = []
+        for path in paths:
+            links = [0 for _ in range(len(path) - 1)]
+            for j in range(0, len(path) - 1, 1):
+                links[j] = self.pt.get_link_id(path[j], path[j + 1])
+            list_backup_paths.append(links)
+        return list_backup_paths
+
+
+    def calculate_slot_range(self, spectrum: List[List[bool]], demand: int):
+        slot_list: List[Slot] = []
+        for c_idx, r in enumerate(spectrum):
+            for i in range(len(r) - demand + 1):
+                if all(r[j] is True for j in range(i, i + demand)):
+                    for j in range(i, i + demand):
+                        r[j] = False
+                    for s_idx in range(i, i + demand):
+                        slot_list.append(Slot(c_idx, s_idx))
+                    return True, spectrum, slot_list
+        return False, spectrum, None
+
+    def backtrack(self, groups: List[List[List[int]]], index: int, current: List[List[int]], used: Set[int]) -> List[List[int]]:
+        if index == len(groups):
+            return current
+
+        for candidate in groups[index]:
+            s = set(candidate)
+            if s & used:
+                continue
+            result = self.backtrack(self, groups, index + 1, current + [candidate], used | s)
+            if result:
+                return result
+        return []
+
+    def select_disjoint_sets(self, groups: List[List[List[int]]]) -> List[List[int]]:
+        return self.backtrack(groups, 0, [], set())
 
     def extend_or_replace_false(
             lst: List[List[bool]],
@@ -137,6 +270,8 @@ class NewRSA(RSA):
                 slot_list: List[Slot] = []
                 for i in slots:
                     slot_list.append(Slot(core, i))
+                for edge in pcycle.get_cycle_links():
+                    self.pt.release_slots(self.pt.get_src_link(edge), self.pt.get_dst_link(edge), slot_list)
                 pcycle.set_reversed_slots(demand)
                 pcycle.set_slot_list(slot_list)
                 return True, spec, pcycle

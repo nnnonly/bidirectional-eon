@@ -3,7 +3,7 @@ from src.Slot import Slot
 
 
 class ProtectingLightPath:
-    def __init__(self, id: float, src: int, dst: int, links_id: List[int], fss: int):
+    def __init__(self, id: float, src: int, dst: int, links_id: List[int], fss: int, backup_paths: List[List[int]]):
         if id < 0 or src < 0 or dst < 0 or len(links_id) < 1 or fss < 0:
             raise ValueError("IllegalArgumentException")
         else:
@@ -12,6 +12,7 @@ class ProtectingLightPath:
             self.dst = dst
             self.links_id = links_id
             self.fss = fss
+            self.backup_paths = backup_paths
 
     def get_id(self) -> float:
         return self.id
@@ -27,6 +28,9 @@ class ProtectingLightPath:
 
     def get_fss(self) -> int:
         return self.fss
+
+    def get_backup_paths(self) -> List[List[int]]:
+        return self.backup_paths
 
     def __str__(self) -> str:
         protect_light_path = f"id:{self.id}, src: {self.src}, dst:{self.dst}, links: "

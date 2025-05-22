@@ -1,9 +1,9 @@
-from typing import List
+from typing import List, Dict
 from src.ProtectingLightPath import ProtectingLightPath
 from src.Slot import Slot
 
 class PCycle:
-    def __init__(self, cycle_links: List[int], nodes: List[int], slot_list: List[Slot], reserved_slots:int = 0, protected_lightpaths:List[ProtectingLightPath] = [], be_protection: List[ProtectingLightPath] = []):
+    def __init__(self, cycle_links: List[int], nodes: List[int], slot_list: List[Slot], reserved_slots:int = 0, protected_lightpaths:List[ProtectingLightPath] = [], be_protection: List[ProtectingLightPath] = [], id_links: Dict[int, List[ProtectingLightPath]] = {}):
         """
         Initialize P-cycle
         :param cycle_links: List of links in P-cycle [(src1, dst1), (src2, dst2), ...]
@@ -16,6 +16,7 @@ class PCycle:
         self.be_protection = be_protection if be_protection else []
         self.reserved_slots = reserved_slots
         self.slot_list = slot_list
+        self.id_links = id_links if id_links else {}
 
     def add_protected_lightpath(self, lightpath):
         self.protected_lightpaths.append(lightpath)
@@ -42,6 +43,12 @@ class PCycle:
 
     def get_reserved_slots(self):
         return self.reserved_slots
+
+    def get_protected_lightpaths(self):
+        return self.protected_lightpaths
+
+    def get_id_links(self):
+        return self.id_links
 
     def p_cycle_contains_flow(self, src, dst):
         """
