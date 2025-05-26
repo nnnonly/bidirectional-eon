@@ -6,6 +6,7 @@ from itertools import islice
 from collections import defaultdict
 
 from src.PCycle import PCycle
+from src.ProtectingLightPath import ProtectingLightPath
 from src.rsa.RSA import RSA
 from src.util.ConnectedComponent import ConnectedComponent
 from src.PhysicalTopology import PhysicalTopology
@@ -33,32 +34,65 @@ class NewRSA(RSA):
     def flow_arrival(self, flow: Flow) -> None:
         demand_in_slots = math.ceil(flow.get_rate() / self.pt.get_slot_capacity())
 
-        if len(self.vt.get_p_cycles):
+        if len(self.vt.get_p_cycles()):
             for p_cycle in self.vt.get_p_cycles():
+                # Check if the p-cycle contains the flow
                 if p_cycle.p_cycle_contains_flow(flow.get_source(), flow.get_destination()):
-                    check_protect, spectrum, p_cycle = self.extend_slot(demand_in_slots, p_cycle)
+                    check_protect, spectrum, p_cycle, slot_list_p_cycle = self.extend_slot(demand_in_slots, p_cycle)
+                    # check extend frequency slot
                     if check_protect:
-                        links = p_cycle.get_cycle_links()
-                        list_slot = []
-                        for idx in range(len(spectrum)):
-                            for j in range(len(spectrum[0])):
-                                if spectrum[idx][j] is False:
-                                    list_slot.append(Slot(idx, j))
+                        # find the shortest working path
+                        check_path, working_path, links, slot_list, backup_paths = self.find_shortest_working_path(flow, slot_list_p_cycle, p_cycle)
+                        if check_path:
+                            # create light path
+                            establish, lp_id = self.establish_connection(links, slot_list, flow, p_cycle)
+                            # add the light path to the p-cycle
+                            protected_lp = ProtectingLightPath(id=lp_id, src=flow.get_source(), dst=flow.get_destination(), links_id=links, fss=demand_in_slots, backup_paths=backup_paths)
 
-                    else:
-                        self.cp.block_flow(flow.get_id())
-                        return
+                            # check slots of p-cycle be extended or find other block frequency slot
+                            for edge in working_path:
+                                self.pt.release_slots(self.pt.get_src_link(edge), self.pt.get_dst_link(edge), p_cycle.get_slot_list())
+                                # self.pt.reserve_slots(self.pt.get_src_link(edge), self.pt.get_dst_link(edge), slot_list)
+                            p_cycle.add_protected_lightpath(protected_lp)
+                            p_cycle.set_slot_list(slot_list_p_cycle)
+                            return
 
-        path = self.initialize_fipp(flow.get_source(), flow.get_destination())
-        print("flow", flow.get_source(), flow.get_destination())
-        print("path", path)
-
-    def fit_connection(self, list_of_regions: Dict[int, List[Slot]], demand_in_slots: int, links: List[int],
-                       flow: Flow) -> bool:
+        check_available, working_links, working_slot_list, backup_paths, p_cycle_links, p_cycle_nodes, slot_list_p_cycle = self.initialize_fipp(
+            flow)
+        if check_available:
+            p_cycle = self.establish_pcycle(p_cycle_links, p_cycle_nodes, slot_list_p_cycle, demand_in_slots)
+            # create light path
+            establish, lp_id = self.establish_connection(working_links, working_slot_list, flow, p_cycle)
+            if establish:
+                protect_lp = ProtectingLightPath(id=lp_id, src=flow.get_source(),
+                                                 dst=flow.get_destination(),
+                                                 links_id=working_links, fss=demand_in_slots,
+                                                 backup_paths=backup_paths)
+                p_cycle.add_protected_lightpath(protect_lp)
+                for j in range(0, len(p_cycle_links), 1):
+                    self.pt.reserve_slots(self.pt.get_src_link(p_cycle_links[j]),
+                                          self.pt.get_dst_link(p_cycle_links[j]),
+                                          slot_list_p_cycle)
+                return
+        self.cp.block_flow(flow.get_id())
         return
 
-    def establish_connection(self, links: List[int], slot_list: List[Slot], modulation: int, flow: Flow):
-        return
+    def establish_connection(self, links: List[int], slot_list: List[Slot], flow: Flow, pcycle: PCycle):
+        id = self.vt.create_light_path(links, slot_list, 0, pcycle)
+        if id >= 0:
+            lps = self.vt.get_light_path(id)
+            flow.set_links(links)
+            flow.set_slot_list(slot_list)
+            self.cp.accept_flow(flow.get_id(), lps)
+            return True, id
+        else:
+            return False, None
+
+    def establish_pcycle(self, cycle_links: List[int], nodes: List[int], slot_list: List[Slot], reserved_slots: int) -> PCycle:
+        new_p_cycle = PCycle(cycle_links=cycle_links, nodes=nodes, reserved_slots=reserved_slots,
+                             slot_list=slot_list)
+        self.vt.add_p_cycles(new_p_cycle)
+        return new_p_cycle
 
     def image_and(self, image1: List[List[bool]], image2: List[List[bool]], res: List[List[bool]]) -> List[List[bool]]:
         for i in range(len(res)):
@@ -72,38 +106,50 @@ class NewRSA(RSA):
     def initialize_fipp(self, flow: Flow):
         demand_in_slots = math.ceil(flow.get_rate() / self.pt.get_slot_capacity())
         path1, path2 = self.get_two_shortest_disjoint_paths(flow)
-        if path1 is None or path2 is None:
-            return None
-        else:
+        if path1 and path2:
             spectrum_path_1 = [[True for _ in range(self.pt.get_num_slots())] for _ in range(self.pt.get_cores())]
             spectrum_path_2 = [[True for _ in range(self.pt.get_num_slots())] for _ in range(self.pt.get_cores())]
             for i in range(len(path1) - 1):
                 spectrum_path_1 = self.image_and(self.pt.get_spectrum(path1[i], path1[i + 1]), spectrum_path_1, spectrum_path_1)
             for i in range(len(path2) - 1):
-                spectrum_path_2 = self.image_and(self.pt.get_spectrum(path1[i], path1[i + 1]), spectrum_path_2, spectrum_path_2)
+                spectrum_path_2 = self.image_and(self.pt.get_spectrum(path2[i], path2[i + 1]), spectrum_path_2, spectrum_path_2)
             spectrum = [[True for _ in range(self.pt.get_num_slots())] for _ in range(self.pt.get_cores())]
             spectrum = self.image_and(spectrum_path_1, spectrum_path_2, spectrum)
-            check_path, spec, slot_list = self.calculate_slot_range(spectrum, demand_in_slots)
+            # check frequency slot for pcycle
+            check_path, spec, slot_list_p_cycle = self.calculate_slot_range(spectrum, demand_in_slots)
             if check_path:
-                spectrum_path_1 = self.image_and(spec, spectrum_path_1, spectrum_path_1)
+                p_cycle_nodes = list(set(path1) | set(path2))
+                for slot in slot_list_p_cycle:
+                    spectrum_path_1[slot.core][slot.slot] = False
                 check_w_1_path, spec_w_1, slot_list_w_1 = self.calculate_slot_range(spectrum_path_1, demand_in_slots)
                 if check_w_1_path:
+                    list_backup_paths = []
                     links_1 = [0 for _ in range(len(path1) - 1)]
                     for j in range(0, len(path1) - 1, 1):
                         links_1[j] = self.pt.get_link_id(path1[j], path1[j + 1])
-                    return True, links_1, slot_list_w_1
+                    links_2 = [0 for _ in range(len(path2) - 1)]
+                    for k in range(0, len(path2) - 1, 1):
+                        links_2[k] = self.pt.get_link_id(path2[k], path2[k + 1])
+                    p_cycle_links = links_1 + links_2
+                    list_backup_paths.append(links_2)
+                    return True, links_1, slot_list_w_1, list_backup_paths, p_cycle_links, p_cycle_nodes, slot_list_p_cycle
                 else:
-                    spectrum_path_2 = self.image_and(spec, spectrum_path_1, spectrum_path_2)
+                    for slot in slot_list_p_cycle:
+                        spectrum_path_2[slot.core][slot.slot] = False
                     check_w_2_path, spec_w_2, slot_list_w_2 = self.calculate_slot_range(spectrum_path_2,
                                                                                         demand_in_slots)
                     if check_w_2_path:
                         links = [0 for _ in range(len(path2) - 1)]
                         for j in range(0, len(path2) - 1, 1):
                             links[j] = self.pt.get_link_id(path2[j], path2[j + 1])
-                        return True, links, slot_list_w_2
-                    else:
-                        return False, None, None
-            return False, None, None
+                        list_backup_paths = []
+                        links_1 = [0 for _ in range(len(path1) - 1)]
+                        for j in range(0, len(path1) - 1, 1):
+                            links_1[j] = self.pt.get_link_id(path1[j], path1[j + 1])
+                        list_backup_paths.append(links_1)
+                        p_cycle_links = links_1 + links
+                        return True, links, slot_list_w_2, list_backup_paths, p_cycle_links, p_cycle_nodes, slot_list_p_cycle
+        return False, None, None, None, None, None, None
 
 
     def get_two_shortest_disjoint_paths(self, flow: Flow):
@@ -130,47 +176,58 @@ class NewRSA(RSA):
             return None, None
 
 
-    def find_shortest_working_path(self, flow: Flow, spectrum: List[List[bool]], pcycle: PCycle):
+    def find_shortest_working_path(self, flow: Flow, slot_list_p_cycle: List[Slot], pcycle: PCycle):
         demand_in_slots = math.ceil(flow.get_rate() / self.pt.get_slot_capacity())
-        shortest_path = nx.shortest_path(self.graph, source=flow.get_source(), target=flow.get_destination())
-        for i in range(len(shortest_path) - 1):
-            spectrum = self.image_and(self.pt.get_spectrum(shortest_path[i], shortest_path[i + 1]), spectrum, spectrum)
-        check_path, spec, slot_list = self.calculate_slot_range(spectrum, demand_in_slots)
-        links = [0 for _ in range(len(shortest_path) - 1)]
-        for j in range(0, len(shortest_path) - 1, 1):
-            links[j] = self.pt.get_link_id(shortest_path[j], shortest_path[j + 1])
-        if check_path:
-            dict_id_links = pcycle.get_id_links()
-            key_set = set(dict_id_links.keys())
-            dict_not_disjoint = {k: v for k, v in dict_id_links.items() if k in key_set}
-            if dict_not_disjoint:
-                sum = demand_in_slots
-                list_disjoint_links = {}
-                for k, v in dict_not_disjoint.items():
-                    for edge in v:
-                        sum += edge.get_fss()
-                    if sum < pcycle.get_reserved_slots():
-                        list_disjoint_links[k] = v
-                if len(list_disjoint_links) == len(dict_id_links.keys()):
-                    return True, shortest_path, links, slot_list
-                else:
-                    backup_paths = self.get_backup_path(flow, pcycle, links)
+        # shortest_path = nx.shortest_path(self.graph, source=flow.get_source(), target=flow.get_destination())
+        k_paths = list(
+            islice(nx.shortest_simple_paths(self.graph, flow.get_source(), flow.get_destination(), weight=None), 10))
+        for shortest_path in k_paths:
+            spectrum = [[True for _ in range(self.pt.get_num_slots())] for _ in range(self.pt.get_cores())]
+            links = [0 for _ in range(len(shortest_path) - 1)]
+            for i in range(len(shortest_path) - 1):
+                spectrum = self.image_and(self.pt.get_spectrum(shortest_path[i], shortest_path[i + 1]), spectrum, spectrum)
+                links[i] = self.pt.get_link_id(shortest_path[i], shortest_path[i + 1])
+            if set(links).issubset(set(pcycle.get_cycle_links())):
+                for slot in slot_list_p_cycle:
+                    spectrum[slot.core][slot.slot] = False
+            check_path, spec, slot_list = self.calculate_slot_range(spectrum, demand_in_slots)
+            # if can be expan FSs
+            if check_path:
+                dict_id_links = pcycle.get_id_links()
+                # key_set = set(dict_id_links.keys())
+                dict_not_disjoint = {k: v for k, v in dict_id_links.items() if k in links}
+                backup_paths = self.get_backup_path(flow, pcycle, links)
+                if dict_not_disjoint:
+                    sum = demand_in_slots
+                    list_disjoint_links = {}
                     for k, v in dict_not_disjoint.items():
-                        list_backup_check = []
-                        list_backup_check.append(backup_paths)
-                        for item in v:
-                            list_backup_check.append(item.get_backup_paths())
-                        if len(list_backup_check) == 0:
-                            return False, None, None, None
+                        for edge in v:
+                            sum += edge.get_fss()
+                        if sum < pcycle.get_reserved_slots():
+                            list_disjoint_links[k] = v
+                    if len(list_disjoint_links) == len(dict_id_links.keys()):
+                        return True, shortest_path, links, slot_list, backup_paths
+                    else:
+                        for k, v in dict_not_disjoint.items():
+                            list_backup_check = []
+                            list_backup_check.append(backup_paths)
+                            for item in v:
+                                list_backup_check.append(item.get_backup_paths())
+                            if len(list_backup_check) == 0:
+                                continue
+                        return True, shortest_path, links, slot_list, backup_paths
+                else:
+                    continue
             else:
-                return False, None, None, None
+                continue
+        return False, None, None, None, None
 
 
     def get_backup_path(self, flow: Flow, pcycle: PCycle, working_path: List[int]):
         graph = nx.Graph()
-        filtered_pcycle = [e for e in working_path if e not in pcycle.get_cycle_links()]
+        filtered_pcycle = [e for e in pcycle.get_cycle_links() if e not in working_path]
         for idx in filtered_pcycle:
-            for u, v, data in self.pt.get_graph.edges(data=True):
+            for u, v, data in self.pt.get_graph().edges(data=True):
                 if data.get("id") == idx:
                     graph.add_edge(u, v, **data)
         paths = list(nx.all_simple_paths(graph, source=flow.get_source(), target=flow.get_destination()))
@@ -211,7 +268,7 @@ class NewRSA(RSA):
     def select_disjoint_sets(self, groups: List[List[List[int]]]) -> List[List[int]]:
         return self.backtrack(groups, 0, [], set())
 
-    def extend_or_replace_false(
+    def extend_or_replace_false(self,
             lst: List[List[bool]],
             core_idx: int,
             start: int,
@@ -265,6 +322,7 @@ class NewRSA(RSA):
         if not pcycle.has_sufficient_slots(demand):
             core, min_slot, max_slot = pcycle.get_core_slot_range()
             spec, idx = self.extend_or_replace_false(lst=spectrum, core_idx=core, start=min_slot, end=max_slot, demand=demand)
+            # spec, idx = self.extend_or_replace_false(spectrum, core, min_slot, max_slot, demand)
             if idx is not None:
                 core, slots = idx
                 slot_list: List[Slot] = []
@@ -274,8 +332,48 @@ class NewRSA(RSA):
                     self.pt.release_slots(self.pt.get_src_link(edge), self.pt.get_dst_link(edge), slot_list)
                 pcycle.set_reversed_slots(demand)
                 pcycle.set_slot_list(slot_list)
-                return True, spec, pcycle
+                return True, spec, pcycle, slot_list
             else:
-                return False, None, None
+                return False, None, None, None
         else:
-            return True, spectrum, pcycle
+            return True, spectrum, pcycle, pcycle.get_slot_list()
+
+    # def find_shortest_working_path(self, flow: Flow, spectrum: List[List[bool]], pcycle: PCycle):
+    #     demand_in_slots = math.ceil(flow.get_rate() / self.pt.get_slot_capacity())
+    #     shortest_path = nx.shortest_path(self.graph, source=flow.get_source(), target=flow.get_destination())
+    #     for i in range(len(shortest_path) - 1):
+    #         spectrum = self.image_and(self.pt.get_spectrum(shortest_path[i], shortest_path[i + 1]), spectrum, spectrum)
+    #     check_path, spec, slot_list = self.calculate_slot_range(spectrum, demand_in_slots)
+    #     links = [0 for _ in range(len(shortest_path) - 1)]
+    #     for j in range(0, len(shortest_path) - 1, 1):
+    #         links[j] = self.pt.get_link_id(shortest_path[j], shortest_path[j + 1])
+    #     if check_path:
+    #         dict_id_links = pcycle.get_id_links()
+    #         key_set = set(dict_id_links.keys())
+    #         dict_not_disjoint = {k: v for k, v in dict_id_links.items() if k in key_set}
+    #         backup_paths = self.get_backup_path(flow, pcycle, links)
+    #         if dict_not_disjoint:
+    #             sum = demand_in_slots
+    #             list_disjoint_links = {}
+    #             for k, v in dict_not_disjoint.items():
+    #                 for edge in v:
+    #                     sum += edge.get_fss()
+    #                 if sum < pcycle.get_reserved_slots():
+    #                     list_disjoint_links[k] = v
+    #             if len(list_disjoint_links) == len(dict_id_links.keys()):
+    #                 return True, shortest_path, links, slot_list, backup_paths
+    #             else:
+    #                 for k, v in dict_not_disjoint.items():
+    #                     list_backup_check = []
+    #                     list_backup_check.append(backup_paths)
+    #                     for item in v:
+    #                         list_backup_check.append(item.get_backup_paths())
+    #                     if len(list_backup_check) == 0:
+    #                         return False, None, None, None, None
+    #                 return True, shortest_path, links, slot_list, backup_paths
+    #         else:
+    #             print("KHONG CO DISJOINT PATH")
+    #             return False, None, None, None, None
+    #     else:
+    #         print("KHONG DU FS CHO P-CYCLE")
+    #         return False, None, None, None, None

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<flexgridsim version="0.4">
+    <rsa module="NewRSA"/>
+
+    <trace file="trace.tr"/>
+
+     <traffic calls="10000" load="215" max-rate="100">
+		<calls holding-time="0.1" rate="20" cos="1" weight="1"/>
+     	<calls holding-time="0.1" rate="60" cos="1" weight="1"/>
+        <calls holding-time="0.5" rate="100" cos="1" weight="1"/>
+    </traffic>
+
+    <virtual-topology name="NSFNet">
+    </virtual-topology>
+
+    <physical-topology name="NSFNet" cores="1" slots="24" slotsBandwidth="12.5">
+        <nodes>
+            <node id="0"/>
+            <node id="1" />
+            <node id="2"/>
+            <node id="3"/>
+            <node id="4"/>
+            <node id="5"/>
+        </nodes>
+	<!-- Link weigth = distance in Km
+             Link delay = 1ms for 200Km -->
+        <links>
+            <link id="0" source="0" destination="1" delay="3.75" bandwidth="10000" weight="200" distance="200"/>
+            <link id="1" source="0" destination="2" delay="3.75" bandwidth="10000" weight="500" distance="500"/>
+            <link id="2" source="1" destination="2" delay="6.5" bandwidth="10000" weight="600" distance="600"/>
+            <link id="3" source="1" destination="3" delay="6" bandwidth="10000" weight="700" distance="700"/>
+            <link id="4" source="2" destination="4" delay="15" bandwidth="10000" weight="300" distance="300"/>
+            <link id="5" source="3" destination="5" delay="7.5" bandwidth="10000" weight="400" distance="400"/>
+            <link id="6" source="3" destination="4" delay="3" bandwidth="10000" weight="200" distance="200"/>
+            <link id="7" source="4" destination="5" delay="15" bandwidth="10000" weight="500" distance="500"/>
+        </links>
+    </physical-topology>
+    <graphs>
+    	<graph name="mbbr" dots-file="bf-graph-mbbr-nsf.dat"/>
+		<graph name="avgcrosstalk" dots-file="bf-graph-xt-nsf.dat"/>
+		<graph name="avgbps" dots-file="bf-graph-avgbps-nsf.dat"/>
+    </graphs>
+</flexgridsim>

@@ -18,8 +18,14 @@ class PCycle:
         self.slot_list = slot_list
         self.id_links = id_links if id_links else {}
 
-    def add_protected_lightpath(self, lightpath):
+    def add_protected_lightpath(self, lightpath: ProtectingLightPath):
         self.protected_lightpaths.append(lightpath)
+        for lp_id_link in lightpath.get_links():
+            if lp_id_link not in self.id_links.keys():
+                    self.id_links.setdefault(lp_id_link, []).append(lightpath)
+            if lp_id_link in self.id_links.keys():
+                if lightpath not in self.id_links[lp_id_link]:
+                    self.id_links[lp_id_link].append(lightpath)
 
     def remove_protected_lightpath(self, lightpath):
         if lightpath in self.protected_lightpaths:
@@ -49,6 +55,9 @@ class PCycle:
 
     def get_id_links(self):
         return self.id_links
+
+    def set_id_links(self, id_links: Dict[int, List[ProtectingLightPath]]):
+        self.id_links = id_links
 
     def p_cycle_contains_flow(self, src, dst):
         """
@@ -104,4 +113,4 @@ class PCycle:
         return self.be_protection
 
     def __str__(self):
-        return f"P-cycle: {self.cycle_links}, Protected Paths: {len(self.protected_lightpaths)}, Reserved Slots: {self.reserved_slots}, Cycle Links: {self.cycle_links}, Slot List: {self.slot_list}"
+        return f"P-cycle: {self.cycle_links}, Nodes: {self.nodes}, Protected Paths: {len(self.protected_lightpaths)}, Reserved Slots: {self.reserved_slots}, Cycle Links: {self.cycle_links}, Slot List: {self.slot_list}"

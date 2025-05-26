@@ -35,8 +35,8 @@ class ControlPlane(ControlPlaneForRSA):
             # self.rsa = RSAClass()
             # self.rsa.simulation_interface(xml, pt, vt, self, traffic)
             # self.rsa = ImageRCSA()
-            # self.rsa = NewRSA()
-            self.rsa = FIPP()
+            self.rsa = NewRSA()
+            # self.rsa = FIPP()
             self.rsa.simulation_interface(xml, pt, vt, self, traffic)
         except Exception as e:
             print("Error in ControlPlane: ", e)
@@ -122,7 +122,7 @@ class ControlPlane(ControlPlaneForRSA):
             self.pt.release_slots(self.pt.get_src_link(links[j]), self.pt.get_dst_link(links[j]), light_paths.get_slot_list())
             # self.pt.update_noise(self.pt.get_src_link(links[j]), self.pt.get_dst_link(links[j]), light_paths.get_slot_list(), flow.get_modulation_level())
         self.vt.remove_light_path(light_paths.get_id())
-        # self.vt.remove_lp_p_cycle(light_paths)
+        self.vt.remove_lp_p_cycle(light_paths)
 
     def can_add_flow_to_pt(self, flow: Flow, light_paths: LightPath) -> bool:
         links = light_paths.get_links()
