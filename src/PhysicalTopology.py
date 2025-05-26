@@ -221,7 +221,28 @@ class PhysicalTopology:
             self.graph[src][dst]["reserved_slots"] = reserved_slots
         except Exception as e:
             raise e
-        
+
+    def fragmentation_ratio_1d(self, spectrum) -> float:
+        total_free = sum(1 for s in spectrum if not s)
+        if total_free == 0:
+            return 0.0
+
+        max_contiguous = 0
+        current = 0
+        for s in spectrum:
+            if not s:
+                current += 1
+                max_contiguous = max(max_contiguous, current)
+            else:
+                current = 0
+
+        return 1 - (max_contiguous / total_free)
+
+    def fragmentation_per_link(self, src, dst) -> float:
+        spectrum_matrix = self.get_spectrum(src, dst)
+        frags = [self.fragmentation_ratio_1d(core) for core in spectrum_matrix]
+        return sum(frags) / len(frags)
+
     def get_fragmentation_ratio(self, src, dst, traffic_calls: List[TrafficInfo], slot_capacity: float) -> float:
         free_slots = self.get_spectrum(src, dst)
         fragments_potential = []

@@ -155,23 +155,23 @@ class MyStatistics:
         fragmentation_mean = 0.0
         average_crosstalk = 0.0
 
-        # for i in range(0, self.pt.get_num_links(), 1):
-        #     fragmentation_mean += self.pt.get_fragmentation_ratio(self.pt.get_src_link(i), self.pt.get_dst_link(i),
-        #                                                           self.traffic.get_calls_types_info(), 12.5)
+        for i in range(0, self.pt.get_num_links(), 1):
+            fragmentation_mean += self.pt.fragmentation_per_link(self.pt.get_src_link(i), self.pt.get_dst_link(i))
             # average_crosstalk += self.pt.average_crosstalk(self.pt.get_src_link(i), self.pt.get_dst_link(i))
 
         # average_crosstalk /= self.pt.get_num_links()
-        self.plotter.add_dot_to_graph("avgcrosstalk", self.load, average_crosstalk)
+        # self.plotter.add_dot_to_graph("avgcrosstalk", self.load, average_crosstalk)
         fragmentation_mean /= self.pt.get_num_links()
-        self.plotter.add_dot_to_graph("fragmentation", self.load, fragmentation_mean)
-        mean_transponders = 0.0
-        for i in range(0, len(self.number_of_used_transponders), 1):
-            for j in range(0, len(self.number_of_used_transponders[i]), 1):
-                if self.number_of_used_transponders[i][j] > 0:
-                    mean_transponders += self.number_of_used_transponders[i][j]
-
-        if mean_transponders != float('nan'):
-            self.plotter.add_dot_to_graph("transponders", self.load, mean_transponders)
+        # print("Fragmentation mean: ", fragmentation_mean)
+        # self.plotter.add_dot_to_graph("fragmentation", self.load, fragmentation_mean)
+        # mean_transponders = 0.0
+        # for i in range(0, len(self.number_of_used_transponders), 1):
+        #     for j in range(0, len(self.number_of_used_transponders[i]), 1):
+        #         if self.number_of_used_transponders[i][j] > 0:
+        #             mean_transponders += self.number_of_used_transponders[i][j]
+        #
+        # if mean_transponders != float('nan'):
+        #     self.plotter.add_dot_to_graph("transponders", self.load, mean_transponders)
 
         # xtps = 0.0
         # links_xtps = 0
