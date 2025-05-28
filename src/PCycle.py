@@ -27,9 +27,27 @@ class PCycle:
                 if lightpath not in self.id_links[lp_id_link]:
                     self.id_links[lp_id_link].append(lightpath)
 
+    def remove_path_by_id(self, target_id: int):
+        keys_to_delete = []
+
+        for key, path_list in self.id_links.items():
+            # Giữ lại những path không có id = target_id
+            new_list = [p for p in path_list if p.id != target_id]
+
+            if new_list:
+                self.id_links[key] = new_list  # Cập nhật lại danh sách
+            else:
+                keys_to_delete.append(key)  # Đánh dấu để xóa key sau
+
+        # Xoá các key có danh sách rỗng
+        for key in keys_to_delete:
+            del self.id_links[key]
+
+
     def remove_protected_lightpath(self, lightpath):
-        if lightpath in self.protected_lightpaths:
-            self.protected_lightpaths.remove(lightpath)
+        paths = [p for p in self.protected_lightpaths if p.id != lightpath.id]
+        self.protected_lightpaths = paths
+        self.remove_path_by_id(lightpath.id)
 
     def remove_be_protected_lightpath(self, lightpath):
         if lightpath in self.be_protection:

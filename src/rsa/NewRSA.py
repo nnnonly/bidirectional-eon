@@ -15,6 +15,7 @@ from src.ControlPlaneForRSA import ControlPlaneForRSA
 from src.TrafficGenerator import TrafficGenerator
 from src.Flow import Flow
 from src.Slot import Slot
+from functools import lru_cache
 
 
 class NewRSA(RSA):
@@ -57,8 +58,7 @@ class NewRSA(RSA):
                             p_cycle.set_slot_list(slot_list_p_cycle)
                             return
 
-        check_available, working_links, working_slot_list, backup_paths, p_cycle_links, p_cycle_nodes, slot_list_p_cycle = self.initialize_fipp(
-            flow)
+        check_available, working_links, working_slot_list, backup_paths, p_cycle_links, p_cycle_nodes, slot_list_p_cycle = self.initialize_fipp(flow)
         if check_available:
             p_cycle = self.establish_pcycle(p_cycle_links, p_cycle_nodes, slot_list_p_cycle, demand_in_slots)
             # create light path
@@ -180,7 +180,7 @@ class NewRSA(RSA):
         demand_in_slots = math.ceil(flow.get_rate() / self.pt.get_slot_capacity())
         # shortest_path = nx.shortest_path(self.graph, source=flow.get_source(), target=flow.get_destination())
         k_paths = list(
-            islice(nx.shortest_simple_paths(self.graph, flow.get_source(), flow.get_destination(), weight=None), 10))
+            islice(nx.shortest_simple_paths(self.graph, flow.get_source(), flow.get_destination(), weight=None), 2))
         for shortest_path in k_paths:
             spectrum = [[True for _ in range(self.pt.get_num_slots())] for _ in range(self.pt.get_cores())]
             links = [0 for _ in range(len(shortest_path) - 1)]
@@ -197,7 +197,7 @@ class NewRSA(RSA):
                 # key_set = set(dict_id_links.keys())
                 dict_not_disjoint = {k: v for k, v in dict_id_links.items() if k in links}
                 backup_paths = self.get_backup_path(flow, pcycle, links)
-                if dict_not_disjoint:
+                if len(dict_not_disjoint) > 0:
                     sum = demand_in_slots
                     list_disjoint_links = {}
                     for k, v in dict_not_disjoint.items():
@@ -208,16 +208,19 @@ class NewRSA(RSA):
                     if len(list_disjoint_links) == len(dict_id_links.keys()):
                         return True, shortest_path, links, slot_list, backup_paths
                     else:
+                        # check backup path not disjoint
                         for k, v in dict_not_disjoint.items():
                             list_backup_check = []
                             list_backup_check.append(backup_paths)
                             for item in v:
                                 list_backup_check.append(item.get_backup_paths())
-                            if len(list_backup_check) == 0:
+                            result = self.select_disjoint_sets(list_backup_check)
+                            if len(result) == 0:
                                 continue
-                        return True, shortest_path, links, slot_list, backup_paths
+                            else:
+                                return True, shortest_path, links, slot_list, backup_paths
                 else:
-                    continue
+                    return True, shortest_path, links, slot_list, backup_paths
             else:
                 continue
         return False, None, None, None, None
@@ -252,21 +255,24 @@ class NewRSA(RSA):
                     return True, spectrum, slot_list
         return False, spectrum, None
 
-    def backtrack(self, groups: List[List[List[int]]], index: int, current: List[List[int]], used: Set[int]) -> List[List[int]]:
-        if index == len(groups):
-            return current
 
-        for candidate in groups[index]:
-            s = set(candidate)
-            if s & used:
-                continue
-            result = self.backtrack(self, groups, index + 1, current + [candidate], used | s)
-            if result:
-                return result
-        return []
 
     def select_disjoint_sets(self, groups: List[List[List[int]]]) -> List[List[int]]:
-        return self.backtrack(groups, 0, [], set())
+        @lru_cache(maxsize=None)
+        def backtrack(index: int, used: frozenset) -> Optional[Tuple[List[int], ...]]:
+            if index == len(groups):
+                return ()
+            for candidate in groups[index]:
+                s = set(candidate)
+                if s & used:
+                    continue
+                result = backtrack(index + 1, used | s)
+                if result is not None:
+                    return (tuple(candidate),) + result
+            return None
+
+        result = backtrack(0, frozenset())
+        return [list(r) for r in result] if result else []
 
     def extend_or_replace_false(self,
             lst: List[List[bool]],

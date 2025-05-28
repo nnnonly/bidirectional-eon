@@ -96,15 +96,15 @@ class VirtualTopology:
 
     def remove_lp_p_cycle(self, lp: LightPath):
         p_cycle_protect = lp.get_p_cycle()
-        p_cycle_protect.remove_protected_lightpath(lp)
-        if not p_cycle_protect.get_all_lp():
+        if len(p_cycle_protect.get_protected_lightpaths()) == 1:
             for i in range(0, len(p_cycle_protect.get_cycle_links()), 1):
                 self.pt.release_slots(self.pt.get_src_link(p_cycle_protect.get_cycle_links()[i]),
                                       self.pt.get_dst_link(p_cycle_protect.get_cycle_links()[i]),
                                       p_cycle_protect.get_slot_list())
-        list_protect = lp.get_list_be_protected()
-        for lp in list_protect:
-            lp.remove_be_protected_lightpath(lp)
+            self.p_cycles.remove(p_cycle_protect)
+        else:
+            # Remove the light path from the P-cycle's protected light paths
+            p_cycle_protect.remove_protected_lightpath(lp)
 
     def __str__(self):
         topo = ""

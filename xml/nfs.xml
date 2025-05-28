@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <flexgridsim version="0.4">
-    <rsa module="FIPP"/>
+    <rsa module="NewRSA"/>
 
     <trace file="trace.tr"/>
 
-     <traffic calls="10000" load="215" max-rate="100">
-		<calls holding-time="0.5" rate="20" cos="1" weight="1"/>
-     	<calls holding-time="0.5" rate="60" cos="1" weight="1"/>
-        <calls holding-time="0.5" rate="100" cos="1" weight="1"/>
+     <traffic calls="100000" load="215" max-rate="100">
+		<calls holding-time="0.3" rate="20" cos="1" weight="1"/>
+     	<calls holding-time="0.3" rate="60" cos="1" weight="1"/>
+        <calls holding-time="0.3" rate="100" cos="1" weight="1"/>
     </traffic>
 
     <virtual-topology name="NSFNet">

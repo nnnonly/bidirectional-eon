@@ -33,7 +33,7 @@ class ProtectingLightPath:
         return self.backup_paths
 
     def __str__(self) -> str:
-        protect_light_path = f"id:{self.id}, src: {self.src}, dst:{self.dst}, links: "
+        protect_light_path = f"id:{self.id}, src: {self.src}, dst:{self.dst}, backup_paths: {self.backup_paths}"
         return protect_light_path
     #
     # def to_trace(self) -> str:
