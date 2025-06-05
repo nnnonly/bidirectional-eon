@@ -44,49 +44,27 @@
         </nodes>
         <links>
             <link id="0" source="0" destination="1" delay="4" bandwidth="192" weight="800" distance="800"/>
-            <link id="1" source="1" destination="0" delay="4" bandwidth="192" weight="800" distance="800"/>
             <link id="2" source="0" destination="5" delay="5" bandwidth="192" weight="1000" distance="1000"/>
-            <link id="3" source="5" destination="0" delay="5" bandwidth="192" weight="1000" distance="1000"/>
             <link id="4" source="1" destination="2" delay="5.5" bandwidth="192" weight="1100" distance="1100"/>
-            <link id="5" source="2" destination="1" delay="5.5" bandwidth="192" weight="1100" distance="1100"/>
             <link id="6" source="1" destination="5" delay="4.75" bandwidth="192" weight="950" distance="950"/>
-            <link id="7" source="5" destination="1" delay="4.75" bandwidth="192" weight="950" distance="950"/>
             <link id="8" source="2" destination="3" delay="1.25" bandwidth="192" weight="250" distance="250"/>
-            <link id="9" source="3" destination="2" delay="1.25" bandwidth="192" weight="250" distance="250"/>
             <link id="10" source="2" destination="4" delay="4" bandwidth="192" weight="800" distance="800"/>
-            <link id="11" source="4" destination="2" delay="4" bandwidth="192" weight="800" distance="800"/>
             <link id="12" source="2" destination="6" delay="5" bandwidth="192" weight="1000" distance="1000"/>
-            <link id="13" source="6" destination="2" delay="5" bandwidth="192" weight="1000" distance="1000"/>
             <link id="14" source="3" destination="4" delay="4" bandwidth="192" weight="800" distance="800"/>
-            <link id="15" source="4" destination="3" delay="4" bandwidth="192" weight="800" distance="800"/>
             <link id="16" source="3" destination="6" delay="4.25" bandwidth="192" weight="850" distance="850"/>
-            <link id="17" source="6" destination="3" delay="4.25" bandwidth="192" weight="850" distance="850"/>
             <link id="18" source="4" destination="7" delay="6" bandwidth="192" weight="1200" distance="1200"/>
-            <link id="19" source="7" destination="4" delay="6" bandwidth="192" weight="1200" distance="1200"/>
             <link id="20" source="5" destination="6" delay="5" bandwidth="192" weight="1000" distance="1000"/>
-            <link id="21" source="6" destination="5" delay="5" bandwidth="192" weight="1000" distance="1000"/>
             <link id="22" source="5" destination="8" delay="6" bandwidth="192" weight="1200" distance="1200"/>
-            <link id="23" source="8" destination="5" delay="6" bandwidth="192" weight="1200" distance="1200"/>
             <link id="24" source="5" destination="10" delay="9.5" bandwidth="192" weight="1900" distance="1900"/>
-            <link id="25" source="10" destination="5" delay="9.5" bandwidth="192" weight="1900" distance="1900"/>
             <link id="26" source="6" destination="7" delay="5.75" bandwidth="192" weight="1150" distance="1150"/>
-            <link id="27" source="7" destination="6" delay="5.75" bandwidth="192" weight="1150" distance="1150"/>
             <link id="28" source="6" destination="8" delay="5" bandwidth="192" weight="1000" distance="1000"/>
-            <link id="29" source="8" destination="6" delay="5" bandwidth="192" weight="1000" distance="1000"/>
             <link id="30" source="7" destination="9" delay="4.5" bandwidth="192" weight="900" distance="900"/>
-            <link id="31" source="9" destination="7" delay="4.5" bandwidth="192" weight="900" distance="900"/>
             <link id="32" source="8" destination="9" delay="5" bandwidth="192" weight="1000" distance="1000"/>
-            <link id="33" source="9" destination="8" delay="5" bandwidth="192" weight="1000" distance="1000"/>
             <link id="34" source="8" destination="10" delay="7" bandwidth="192" weight="1400" distance="1400"/>
-            <link id="35" source="10" destination="8" delay="7" bandwidth="192" weight="1400" distance="1400"/>
             <link id="36" source="8" destination="11" delay="5" bandwidth="192" weight="1000" distance="1000"/>
-            <link id="37" source="11" destination="8" delay="5" bandwidth="192" weight="1000" distance="1000"/>
             <link id="38" source="9" destination="12" delay="4.75" bandwidth="192" weight="950" distance="950"/>
-            <link id="39" source="12" destination="9" delay="4.75" bandwidth="192" weight="950" distance="950"/>
             <link id="40" source="9" destination="13" delay="4.25" bandwidth="192" weight="850" distance="850"/>
-            <link id="41" source="13" destination="9" delay="4.25" bandwidth="192" weight="850" distance="850"/>
             <link id="42" source="10" destination="11" delay="4.5" bandwidth="192" weight="900" distance="900"/>
-            <link id="43" source="11" destination="10" delay="4.5" bandwidth="192" weight="900" distance="900"/>
             <link id="44" source="10" destination="14" delay="6.5" bandwidth="192" weight="1300" distance="1300"/>
             <link id="45" source="14" destination="10" delay="6.5" bandwidth="192" weight="1300" distance="1300"/>
             <link id="46" source="10" destination="18" delay="13" bandwidth="192" weight="2600" distance="2600"/>

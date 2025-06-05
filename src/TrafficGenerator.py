@@ -82,7 +82,7 @@ class TrafficGenerator:
                 weight_vector[aux] = i
                 aux += 1
 
-        mean_arrival_time = (self.mean_holding_time * (self.mean_rate * 1.0 / self.max_rate)) / self.load
+        mean_arrival_time = (self.mean_holding_time * (self.mean_rate * 1.0 / self.max_rate)) / 10
 
         type = 0
         src = 0

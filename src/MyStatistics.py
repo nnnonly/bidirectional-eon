@@ -282,9 +282,9 @@ class MyStatistics:
                 stats += f"\tBP ({block_prob}%)"
                 stats += f"\tBBR ({bbr}%)\n"
 
-        # with open("/Users/nhungtrinh/Documents/ISIMA/networkx-flexgrid/stats.txt", "a") as f:
-        #     f.write(stats)
-        #     f.write("\n")
+        with open("C:/Users/tctrinh/Desktop/research/bidirectional-eon/out/stats.txt", "a") as f:
+            f.write(stats)
+            f.write("\n")
 
         return stats
 

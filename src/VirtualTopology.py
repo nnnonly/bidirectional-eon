@@ -6,6 +6,8 @@ from src.PhysicalTopology import PhysicalTopology
 from src.Slot import Slot
 from src.Tracer import Tracer
 from src.PCycle import PCycle
+from src.Flow import Flow
+import uuid
 
 
 class VirtualTopology:
@@ -23,7 +25,7 @@ class VirtualTopology:
         for i in range(num_nodes):
             self.g_lightpath.add_node(i)
 
-    def create_light_path(self, links: List[int], slot_list: List[Slot], modulation_level: int, p_cycle: PCycle = None) -> float:
+    def create_light_path(self, flow: Flow, links: List[int], slot_list: List[Slot], modulation_level: int, p_cycle: PCycle = None) -> float:
         if len(links) < 1:
             raise ValueError("Invalid links")
 
@@ -32,12 +34,12 @@ class VirtualTopology:
 
         self.create_light_path_in_pt(links, slot_list)
 
-        src = self.pt.get_src_link(links[0])
-        dst = self.pt.get_dst_link(links[-1])
+        src = flow.get_source()
+        dst = flow.get_destination()
         id = self.next_lightpath_id
 
         lp = LightPath(id, src, dst, links, slot_list, modulation_level, p_cycle)
-        self.g_lightpath.add_edge(src, dst, lightpath=lp)
+        self.g_lightpath.add_edge(src, dst, key=id, lightpath=lp)
         self.tr.create_lightpath(lp)
         self.next_lightpath_id += 1
         return id
@@ -47,6 +49,23 @@ class VirtualTopology:
             if "lightpath" in data and data["lightpath"].get_id() == id:
                 return data["lightpath"]
         return None
+
+    def print_light_paths(self) -> None:
+        """Print all light paths in the virtual topology."""
+        num_lp = 0
+        for src, dst, data in self.g_lightpath.edges(data=True):
+            if "lightpath" in data:
+                lp = data["lightpath"]
+                num_lp += 1
+                # print(f'LightPath ID: {lp.get_id()}, Source: {lp.get_source()}, Destination: {lp.get_destination()}, Links: {lp.get_links()}, Slots: {lp.get_slot_list()}')
+        print(len(self.g_lightpath.edges()))
+        # print(num_lp)
+
+        sum_protect = 0
+        for p_cycle in self.p_cycles:
+            print(f'Cycle Links: {p_cycle.get_cycle_links()}, Protected Light Paths: {len(p_cycle.get_protected_lightpaths())}')
+            sum_protect += len(p_cycle.get_protected_lightpaths())
+        print(f'Total Protected Light Paths: {sum_protect}')
 
     def can_create_light_path(self, links: List[int], slot_list: List[Slot]) -> bool:
         try:
@@ -62,7 +81,6 @@ class VirtualTopology:
         for link in links:
             self.pt.reserve_slots(self.pt.get_src_link(link), self.pt.get_dst_link(link), slot_list)
 
-
     def remove_light_path(self, id: float) -> bool:
         """Remove a light path by ID from the virtual topology."""
         if id < 0:
@@ -70,15 +88,15 @@ class VirtualTopology:
         else:
             # Find the light path in the graph
             for src, dst, data in list(self.g_lightpath.edges(data=True)):  # Iterate over edges
+
                 if "lightpath" in data and data["lightpath"].get_id() == id:
                     lp = data["lightpath"]
                     self.remove_light_path_from_pt(lp.get_links(), lp.get_slot_list())  # Release slots
-                    self.g_lightpath.remove_edge(src, dst)  # Remove the edge from the graph
+                    self.g_lightpath.remove_edge(src, dst, key=id)  # Remove the edge from the graph
                     # self.list_nodes.remove((src, dst))
                     # self.light_path.pop(id, None)  # Remove from dictionary if it exists
                     self.tr.remove_lightpath(lp)
                     return True  # Successfully removed
-
         return False  # Light path not found
 
     def remove_light_path_from_pt(self, links: List[int], slot_list: List[Slot]) -> None:
