@@ -3,6 +3,7 @@ from src.Simulator import Simulator
 if __name__ == '__main__':
     sim_config_file = "xml/nfs.xml"
     trace = True
+
     verbose = True
 
     forced_load = 50

@@ -1,10 +1,9 @@
-import PCycle
-import Flow
+from src.PCycle import PCycle
+from src.PhysicalTopology import PhysicalTopology
 from typing import Dict, List, Tuple
 import math
-import PhysicalTopology
 from collections import deque
-from networkx import nx
+import networkx as nx
 
 class ShortestPath():
     def __init__(self, pt: PhysicalTopology):
@@ -15,7 +14,7 @@ class ShortestPath():
         Returns a list of links to be removed from the graph based on the pcycle and flow.
         """
         new_graph = self.pt.get_graph().copy()
-        filtered = {k: v for k, v in pcycle.get_id_links.items() if len(v) >= 2}
+        filtered = {k: v for k, v in pcycle.get_id_links() if len(v) >= 2}
         for k, v in filtered.items():
             total_length = sum(path.get_fss() for path in v)
             if k in pcycle.get_cycle_links() and total_length + demand_in_slots > pcycle.get_reserved_slots():
@@ -26,8 +25,8 @@ class ShortestPath():
 
     def remove_link_based_on_FS(self, mid: int, demand_in_slots: int, remove_graph_pcycle_links: nx.Graph) -> nx.Graph:
         new_graph = nx.Graph()
-        self.get_link_remove(self.pt.get_pcycle(), demand_in_slots)
-        for u, v, edge_data in self.graph.edges(data=True):
+        # self.get_link_remove(self.pt.get_pcycle(), demand_in_slots)
+        for u, v, edge_data in remove_graph_pcycle_links.edges(data=True):
             edge_spectrum = self.pt.get_spectrum(u, v)
             if all(edge_spectrum[mid:mid - demand_in_slots + 1]):
                 new_graph.add_edge(u, v, **edge_data)

@@ -181,15 +181,15 @@ class BfsRSA(RSA):
         upper_bound = self.pt.get_num_slots()
         lower_bound = 0
         mid = 0
-        shortest_path = ShortestPath(self.pt)
+        shortest_path_obj = ShortestPath(self.pt)
         best_path = []
         best_solution = None
         while lower_bound <= upper_bound:
 
             mid = (upper_bound + lower_bound) // 2
             
-            graph_remove_pcycle_links = shortest_path.link_pcycle_remove(pcycle= pcycle, demand_in_slots=demand_in_slots)
-            modified_graph = shortest_path.remove_link_based_on_FS(mid, demand_in_slots, graph_remove_pcycle_links)
+            graph_remove_pcycle_links = shortest_path_obj.link_pcycle_remove(pcycle= pcycle, demand_in_slots=demand_in_slots)
+            modified_graph = shortest_path_obj.remove_link_based_on_FS(mid, demand_in_slots, graph_remove_pcycle_links)
             # Find the shortest path in the modified graph
             shortest_path = nx.shortest_path(modified_graph, source=flow.get_source(), target=flow.get_destination(), weight=None)
             par = [-1] * modified_graph.number_of_nodes()
@@ -198,7 +198,7 @@ class BfsRSA(RSA):
             dist = [float('inf')] * modified_graph.number_of_nodes()
 
         # Function call to find the distance of all nodes and their parent nodes
-            shortest_path.bfs(modified_graph, flow.get_source(), par, dist)
+            shortest_path_obj.bfs(modified_graph, flow.get_source(), par, dist)
             if dist[flow.get_destination()] == float('inf'):
                 print("Source and Destination are not connected")
                 return
@@ -217,7 +217,7 @@ class BfsRSA(RSA):
                 upper_bound = mid + 1
             else:
                 lower_bound = mid + 1
-        if path and best_solution:
+        if best_path and best_solution:
             links = [0 for _ in range(len(best_path) - 1)]
             slot_list: List[Slot] = [(s, 0) for s in range(best_solution - demand_in_slots + 1, best_solution)]
             for i in range(len(best_path) - 1):

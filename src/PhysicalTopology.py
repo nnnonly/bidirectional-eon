@@ -216,9 +216,11 @@ class PhysicalTopology:
                 assert 0 <= slot_list[i].core < self.cores, "Illegal argument exception"
                 assert 0 <= slot_list[i].slot < self.slots, "Illegal argument exception"
             reserved_slots = edge_data["reserved_slots"]
+            print("BEFORE", self.graph[src][dst]["reserved_slots"])
             for s in slot_list:
                 reserved_slots.discard((s.core, s.slot))
             self.graph[src][dst]["reserved_slots"] = reserved_slots
+            print("AFTER", self.graph[src][dst]["reserved_slots"])
         except Exception as e:
             raise e
 

@@ -91,6 +91,7 @@ class VirtualTopology:
 
                 if "lightpath" in data and data["lightpath"].get_id() == id:
                     lp = data["lightpath"]
+                    print("LINK", lp.get_links())
                     self.remove_light_path_from_pt(lp.get_links(), lp.get_slot_list())  # Release slots
                     self.g_lightpath.remove_edge(src, dst, key=id)  # Remove the edge from the graph
                     # self.list_nodes.remove((src, dst))
@@ -104,7 +105,9 @@ class VirtualTopology:
         for link in links:  # Get source and destination of the link
             src = self.pt.get_src_link(link)
             dst = self.pt.get_dst_link(link)
+            print("BEFORE RELEASE SLOTS", src, dst, slot_list)
             self.pt.release_slots(src, dst, slot_list)
+            print("AFTER RELEASE SLOTS", src, dst, slot_list)
 
     def get_p_cycles(self) -> List[PCycle]:
         return self.p_cycles
