@@ -34,7 +34,6 @@ class NewRSA(RSA):
 
     def flow_arrival(self, flow: Flow) -> None:
         demand_in_slots = math.ceil(flow.get_rate() / self.pt.get_slot_capacity())
-
         if len(self.vt.get_p_cycles()):
             for p_cycle in self.vt.get_p_cycles():
                 # Check if the p-cycle contains the flow
@@ -55,35 +54,44 @@ class NewRSA(RSA):
                                 self.pt.release_slots(self.pt.get_src_link(edge), self.pt.get_dst_link(edge), p_cycle.get_slot_list())
                                 # self.pt.reserve_slots(self.pt.get_src_link(edge), self.pt.get_dst_link(edge), slot_list)
                             p_cycle.add_protected_lightpath(protected_lp)
+                            print("ADD PROTECTED LP", self.vt.print_light_paths())
                             p_cycle.set_slot_list(slot_list_p_cycle)
                             return
+                        else:
+                            self.cp.block_flow(flow.get_id())
+                            return
+                    else:
+                        self.cp.block_flow(flow.get_id())
+                        return
+
 
         check_available, working_links, working_slot_list, backup_paths, p_cycle_links, p_cycle_nodes, slot_list_p_cycle = self.initialize_fipp(flow)
         if check_available:
             p_cycle = self.establish_pcycle(p_cycle_links, p_cycle_nodes, slot_list_p_cycle, demand_in_slots)
             # create light path
             establish, lp_id = self.establish_connection(working_links, working_slot_list, flow, p_cycle)
-            if establish:
-                protect_lp = ProtectingLightPath(id=lp_id, src=flow.get_source(),
-                                                 dst=flow.get_destination(),
-                                                 links_id=working_links, fss=demand_in_slots,
-                                                 backup_paths=backup_paths)
-                p_cycle.add_protected_lightpath(protect_lp)
-                for j in range(0, len(p_cycle_links), 1):
-                    self.pt.reserve_slots(self.pt.get_src_link(p_cycle_links[j]),
-                                          self.pt.get_dst_link(p_cycle_links[j]),
-                                          slot_list_p_cycle)
-                return
+            protect_lp = ProtectingLightPath(id=lp_id, src=flow.get_source(),
+                                             dst=flow.get_destination(),
+                                             links_id=working_links, fss=demand_in_slots,
+                                             backup_paths=backup_paths)
+            p_cycle.add_protected_lightpath(protect_lp)
+            print("ADD PROTECTED LP", self.vt.print_light_paths())
+            for j in range(0, len(p_cycle_links), 1):
+                self.pt.reserve_slots(self.pt.get_src_link(p_cycle_links[j]),
+                                      self.pt.get_dst_link(p_cycle_links[j]),
+                                      slot_list_p_cycle)
+            return
         self.cp.block_flow(flow.get_id())
         return
 
     def establish_connection(self, links: List[int], slot_list: List[Slot], flow: Flow, pcycle: PCycle):
-        id = self.vt.create_light_path(links, slot_list, 0, pcycle)
+        id = self.vt.create_light_path(flow, links, slot_list, 0, pcycle)
         if id >= 0:
             lps = self.vt.get_light_path(id)
             flow.set_links(links)
             flow.set_slot_list(slot_list)
             self.cp.accept_flow(flow.get_id(), lps)
+            # print("ADD", self.vt.print_light_paths())
             return True, id
         else:
             return False, None

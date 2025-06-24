@@ -126,8 +126,8 @@ class Simulator:
                     print("(5) Running the simulation...")
                 print(f"{sim_config_file} -> Load {forced_load}: Running the simulation number {seed}")
 
-                # with open("/Users/nhungtrinh/Documents/ISIMA/networkx-flexgrid/stats.txt", "a") as f:
-                #     f.write(f"{sim_config_file} -> Load {forced_load}: Running the simulation number {seed} \n")
+                with open("C:/Users/tctrinh/Desktop/research/bidirectional-eon/out/stats.txt", "a") as f:
+                    f.write(f"{sim_config_file} -> Load {forced_load}: Running the simulation number {seed} \n")
                 SimulationRunner(cp, events)
                 if Simulator.verbose:
                     print("(5) Done. (", round((time.time_ns() - begin) * 1e-9, 3), " sec)")

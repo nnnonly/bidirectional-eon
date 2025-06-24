@@ -15,5 +15,3 @@ class SimulationRunner:
             st.add_event(event)
             cp.new_event(event)
             event = events.pop_event()
-
-

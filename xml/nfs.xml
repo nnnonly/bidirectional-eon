@@ -4,7 +4,6 @@
     <rsa module="NewRSA"/>
 
     <trace file="trace.tr"/>
-
      <traffic calls="10000" load="215" max-rate="100">
 		<calls holding-time="0.3" rate="20" cos="1" weight="1"/>
      	<calls holding-time="0.3" rate="60" cos="1" weight="1"/>

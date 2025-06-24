@@ -16,13 +16,13 @@ class Event(ABC):
         return self.get_time() == other.get_time()
 
     def __lt__(self, other):
-        return self.get_time() < other.get_time()
+        return self.time < other.get_time()
 
-    def __gt__(self, other):
-        return self.get_time() > other.get_time()
-
-    def __le__(self, other):
-        return self.get_time() <= other.get_time()
-
-    def __ge__(self, other):
-        return self.get_time() >= other.get_time()
+    # def __gt__(self, other):
+    #     return self.get_time() > other.get_time()
+    #
+    # def __le__(self, other):
+    #     return self.get_time() <= other.get_time()
+    #
+    # def __ge__(self, other):
+    #     return self.get_time() >= other.get_time()
