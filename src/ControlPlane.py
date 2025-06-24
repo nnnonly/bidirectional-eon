@@ -18,6 +18,7 @@ from src.rsa.ImageRCSA import ImageRCSA
 from src.rsa.FIPP import FIPP
 from src.rsa.PP import PP
 from src.rsa.NewRSA import NewRSA
+from src.rsa.BfsRSA import BfsRSA
 
 class ControlPlane(ControlPlaneForRSA):
     def __init__(self, xml: ET.Element, event_scheduler: EventScheduler, rsa_module: str, pt: PhysicalTopology,
@@ -35,7 +36,8 @@ class ControlPlane(ControlPlaneForRSA):
             # self.rsa = RSAClass()
             # self.rsa.simulation_interface(xml, pt, vt, self, traffic)
             # self.rsa = ImageRCSA()
-            self.rsa = NewRSA()
+            # self.rsa = NewRSA()
+            self.rsa = BfsRSA()
             # self.rsa = FIPP()
             self.rsa.simulation_interface(xml, pt, vt, self, traffic)
         except Exception as e:

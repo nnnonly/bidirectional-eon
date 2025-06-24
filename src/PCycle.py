@@ -77,6 +77,16 @@ class PCycle:
     def set_id_links(self, id_links: Dict[int, List[ProtectingLightPath]]):
         self.id_links = id_links
 
+    def check_lp_on_cycle(self, lightpath: ProtectingLightPath):
+        """
+        Check if the lightpath is on P-cycle
+        :param lightpath: ProtectingLightPath object
+        :return: True if the lightpath is on P-cycle, False otherwise
+        """
+        if set(lightpath.get_links()) & set(self.cycle_links):
+            return True
+        return False
+
     def p_cycle_contains_flow(self, src, dst):
         """
         Check if the P-cycle contains the flow
