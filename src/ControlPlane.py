@@ -50,6 +50,8 @@ class ControlPlane(ControlPlaneForRSA):
         elif isinstance(event, FlowDepartureEvent):
             removed_flow = self.remove_flow(event.get_id())
             self.rsa.flow_departure(removed_flow)
+            print("Flow departed")
+            self.vt.print_light_paths()
 
     def get_flow(self, id: int) -> Flow:
         return self.active_flows.get(id)
@@ -125,7 +127,7 @@ class ControlPlane(ControlPlaneForRSA):
             # self.pt.update_noise(self.pt.get_src_link(links[j]), self.pt.get_dst_link(links[j]), light_paths.get_slot_list(), flow.get_modulation_level())
         self.vt.remove_light_path(light_paths.get_id())
         self.vt.remove_lp_p_cycle(light_paths)
-        self.vt.print_light_paths()
+        # self.vt.print_light_paths()
 
 
     def can_add_flow_to_pt(self, flow: Flow, light_paths: LightPath) -> bool:

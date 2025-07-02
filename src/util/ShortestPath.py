@@ -14,13 +14,13 @@ class ShortestPath():
         Returns a list of links to be removed from the graph based on the pcycle and flow.
         """
         new_graph = self.pt.get_graph().copy()
-        filtered = {k: v for k, v in pcycle.get_id_links() if len(v) >= 2}
+        filtered = {k: v for k, v in pcycle.get_id_links().items() if len(v) >= 2}
         for k, v in filtered.items():
             total_length = sum(path.get_fss() for path in v)
             if k in pcycle.get_cycle_links() and total_length + demand_in_slots > pcycle.get_reserved_slots():
-                new_graph.remove_edge(self.pt.get_src_link(k), self.pt.get_destination(k))
+                new_graph.remove_edge(self.pt.get_src_link(k), self.pt.get_dst_link(k))
             if k not in pcycle.get_cycle_links() and total_length > pcycle.get_reserved_slots() and len(v) > 1:
-                new_graph.remove_edge(self.pt.get_src_link(k), self.pt.get_destination(k))
+                new_graph.remove_edge(self.pt.get_src_link(k), self.pt.get_dst_link(k))
         return new_graph
 
     def remove_link_based_on_FS(self, mid: int, demand_in_slots: int, remove_graph_pcycle_links: nx.Graph) -> nx.Graph:
@@ -28,57 +28,46 @@ class ShortestPath():
         # self.get_link_remove(self.pt.get_pcycle(), demand_in_slots)
         for u, v, edge_data in remove_graph_pcycle_links.edges(data=True):
             edge_spectrum = self.pt.get_spectrum(u, v)
-            if all(edge_spectrum[mid:mid - demand_in_slots + 1]):
+            if all(edge_spectrum[0][mid:mid + demand_in_slots]):
                 new_graph.add_edge(u, v, **edge_data)
         return new_graph
     
-    def bfs(self, graph, S, par, dist):
-        # Queue to store the nodes in the order they are visited
-        q = deque()
-        # Mark the distance of the source node as 0
-        dist[S] = 0
-        # Push the source node to the queue
-        q.append(S)
+    def bfs(self, graph: nx.Graph, source: int, destination: int) -> List[int]:
+        if source in graph.nodes() and destination in graph.nodes():
+            q = deque()
+            dist = {node: float('inf') for node in graph}
+            par = {node: -1 for node in graph}
 
-        # Iterate until the queue is not empty
-        while q:
-            # Pop the node at the front of the queue
-            node = q.popleft()
+            dist[source] = 0
+            q.append(source)
 
-            # Explore all the neighbors of the current node
-            for neighbor in graph[node]:
-                # Check if the neighboring node is not visited
-                if dist[neighbor] == float('inf'):
-                    # Mark the current node as the parent of the neighboring node
-                    par[neighbor] = node
-                    # Mark the distance of the neighboring node as the distance of the current node + 1
-                    dist[neighbor] = dist[node] + 1
-                    # Insert the neighboring node to the queue
-                    q.append(neighbor)
+            while q:
+                node = q.popleft()
+                if node == destination:
+                    break  # found destination
 
+                for neighbor in graph[node]:
+                    if dist[neighbor] == float('inf'):
+                        dist[neighbor] = dist[node] + 1
+                        par[neighbor] = node
+                        q.append(neighbor)
 
-    def print_shortest_distance(self, graph, S, D, V):
-        # par[] array stores the parent of nodes
-        par = [-1] * V
+            # reconstruct path if reachable
+            if dist[destination] == float('inf'):
+                return []  # no path
 
-        # dist[] array stores the distance of nodes from S
-        dist = [float('inf')] * V
+            path = []
+            current = destination
+            while current != -1:
+                path.append(current)
+                current = par[current]
+            path.reverse()
+            return path
+        return []
 
-        # Function call to find the distance of all nodes and their parent nodes
-        self.bfs(graph, S, par, dist)
-
-        if dist[D] == float('inf'):
-            print("Source and Destination are not connected")
-            return
-
-        # List path stores the shortest path
-        path = []
-        current_node = D
-        path.append(D)
-        while par[current_node] != -1:
-            path.append(par[current_node])
-            current_node = par[current_node]
-
-        # Printing path from source to destination
-        for i in range(len(path) - 1, -1, -1):
-            print(path[i], end=" ")
+    def find_first_fit_slot_index(self, slot_list: List[int], demand_in_slots: int) -> int:
+        n = len(slot_list)
+        for i in range(n - demand_in_slots + 1):
+            if all(slot_list[i:i + demand_in_slots]):
+                return i
+        return -1

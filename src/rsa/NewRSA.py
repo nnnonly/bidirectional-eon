@@ -54,7 +54,7 @@ class NewRSA(RSA):
                                 self.pt.release_slots(self.pt.get_src_link(edge), self.pt.get_dst_link(edge), p_cycle.get_slot_list())
                                 # self.pt.reserve_slots(self.pt.get_src_link(edge), self.pt.get_dst_link(edge), slot_list)
                             p_cycle.add_protected_lightpath(protected_lp)
-                            print("ADD PROTECTED LP", self.vt.print_light_paths())
+                            # print("ADD PROTECTED LP", self.vt.print_light_paths())
                             p_cycle.set_slot_list(slot_list_p_cycle)
                             return
                         else:
@@ -75,7 +75,7 @@ class NewRSA(RSA):
                                              links_id=working_links, fss=demand_in_slots,
                                              backup_paths=backup_paths)
             p_cycle.add_protected_lightpath(protect_lp)
-            print("ADD PROTECTED LP", self.vt.print_light_paths())
+            # print("ADD PROTECTED LP", self.vt.print_light_paths())
             for j in range(0, len(p_cycle_links), 1):
                 self.pt.reserve_slots(self.pt.get_src_link(p_cycle_links[j]),
                                       self.pt.get_dst_link(p_cycle_links[j]),
@@ -158,9 +158,9 @@ class NewRSA(RSA):
                         p_cycle_links = links_1 + links
                         return True, links, slot_list_w_2, list_backup_paths, p_cycle_links, p_cycle_nodes, slot_list_p_cycle
                     else:
-                        with open("C:/Users/tctrinh/Desktop/research/bidirectional-eon/out/res.txt", "a") as f:
+                        with open("/Users/nhungtrinh/Work/bidirectional-eon/out/res.txt", "a") as f:
                             f.write(f"P-Cycle du slot nhung khong tim duoc duong di \n")
-        with open("C:/Users/tctrinh/Desktop/research/bidirectional-eon/out/res.txt", "a") as f:
+        with open("/Users/nhungtrinh/Work/bidirectional-eon/out/res.txt", "a") as f:
             f.write(f"NEW-Khong tim thay duong di \n")
         return False, None, None, None, None, None, None
 
@@ -236,7 +236,7 @@ class NewRSA(RSA):
                     return True, shortest_path, links, slot_list, backup_paths
             else:
                 continue
-        with open("C:/Users/tctrinh/Desktop/research/bidirectional-eon/out/res.txt", "a") as f:
+        with open("/Users/nhungtrinh/Work/bidirectional-eon/out/res.txt", "a") as f:
             f.write(f"OLD-KHong tim thay duong di \n")
         return False, None, None, None, None
 
@@ -297,7 +297,7 @@ class NewRSA(RSA):
             demand: int
     ) -> Tuple[List[List[bool]], Optional[Tuple[int, List[int]]]]:
         lst_cop = [row.copy() for row in lst]
-        with open("C:/Users/tctrinh/Desktop/research/bidirectional-eon/out/res.txt", "a") as f:
+        with open("/Users/nhungtrinh/Work/bidirectional-eon/out/res.txt", "a") as f:
             f.write(f"LST {lst} \n")
         row = lst[core_idx]
         original_false_indices = list(range(start, end + 1))
@@ -334,14 +334,14 @@ class NewRSA(RSA):
                     for j in range(i, i + demand):
                         r[j] = False
                     return lst, (c_idx, list(range(i, i + demand)))
-        with open("C:/Users/tctrinh/Desktop/research/bidirectional-eon/out/res.txt", "a") as f:
+        with open("/Users/nhungtrinh/Work/bidirectional-eon/out/res.txt", "a") as f:
             f.write(f"Khong EXTEND duoc P-CYCLE \n")
         return lst, None
 
     def extend_slot(self, demand: int, pcycle: PCycle):
         spectrum = [[True for _ in range(self.pt.get_num_slots())] for _ in range(self.pt.get_cores())]
         for edge in pcycle.get_cycle_links():
-            with open("C:/Users/tctrinh/Desktop/research/bidirectional-eon/out/res.txt", "a") as f:
+            with open("/Users/nhungtrinh/Work/bidirectional-eon/out/res.txt", "a") as f:
                 f.write(f"from {self.pt.get_src_link(edge)} to {self.pt.get_dst_link(edge)} : {self.pt.get_spectrum(self.pt.get_src_link(edge), self.pt.get_dst_link(edge))} \n")
             spectrum = self.image_and(self.pt.get_spectrum(self.pt.get_src_link(edge), self.pt.get_dst_link(edge)),
                                       spectrum, spectrum)

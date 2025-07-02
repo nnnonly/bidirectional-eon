@@ -57,15 +57,21 @@ class VirtualTopology:
             if "lightpath" in data:
                 lp = data["lightpath"]
                 num_lp += 1
+
                 # print(f'LightPath ID: {lp.get_id()}, Source: {lp.get_source()}, Destination: {lp.get_destination()}, Links: {lp.get_links()}, Slots: {lp.get_slot_list()}')
         print(len(self.g_lightpath.edges()))
-        # print(num_lp)
+        print(num_lp)
 
         sum_protect = 0
         for p_cycle in self.p_cycles:
-            print(f'Cycle Links: {p_cycle.get_cycle_links()}, Protected Light Paths: {len(p_cycle.get_protected_lightpaths())}')
+            # print(f'Cycle Links: {p_cycle.get_cycle_links()}, Protected Light Paths: {len(p_cycle.get_protected_lightpaths())}')
             sum_protect += len(p_cycle.get_protected_lightpaths())
-        print(f'Total Protected Light Paths: {sum_protect}')
+        with open("/Users/nhungtrinh/Work/bidirectional-eon/out/res.txt", "a") as f:
+            f.write(f"Total Protected Light Paths: {sum_protect} \n")
+        print(f'Total Protected Light Paths: {sum_protect}, {num_lp}')
+        # if num_lp < 5:
+        #     with open("/Users/nhungtrinh/Work/bidirectional-eon/out/res.txt", "a") as f:
+        #         f.write(f"GRAPH {self.pt.get_graph().edges(data=True)} \n")
 
     def can_create_light_path(self, links: List[int], slot_list: List[Slot]) -> bool:
         try:
@@ -91,7 +97,6 @@ class VirtualTopology:
 
                 if "lightpath" in data and data["lightpath"].get_id() == id:
                     lp = data["lightpath"]
-                    print("LINK", lp.get_links())
                     self.remove_light_path_from_pt(lp.get_links(), lp.get_slot_list())  # Release slots
                     self.g_lightpath.remove_edge(src, dst, key=id)  # Remove the edge from the graph
                     # self.list_nodes.remove((src, dst))
@@ -105,9 +110,7 @@ class VirtualTopology:
         for link in links:  # Get source and destination of the link
             src = self.pt.get_src_link(link)
             dst = self.pt.get_dst_link(link)
-            print("BEFORE RELEASE SLOTS", src, dst, slot_list)
             self.pt.release_slots(src, dst, slot_list)
-            print("AFTER RELEASE SLOTS", src, dst, slot_list)
 
     def get_p_cycles(self) -> List[PCycle]:
         return self.p_cycles
