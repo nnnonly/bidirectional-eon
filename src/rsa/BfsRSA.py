@@ -172,7 +172,7 @@ class BfsRSA(RSA):
             p_cycle_links = link_1 + link_2
             check_path_1 = self.check_slot_enough_for_wp(best_path_1, slot_list)
             p_cycle_nodes = list(set(best_path_1) | set(best_path_2))
-            with open("/Users/nhungtrinh/Work/bidirectional-eon/out/res.txt", "a") as f:
+            with open("C:/Users/tctrinh/Desktop/research/bidirectional-eon/out/res.txt", "a") as f:
                 f.write(f"TIM DUOC SLOT PCYCLE \n")
             if check_path_1 != -1:
                 slot_list_wp: List[Slot] = [Slot(0, s) for s in range(check_path_1, check_path_1 + demand_in_slots)]
@@ -182,7 +182,7 @@ class BfsRSA(RSA):
                 if check_path_2 != -1:
                     slot_list_wp: List[Slot] = [(0, s) for s in range(check_path_2, check_path_2 + demand_in_slots)]
                     return True, link_2, slot_list_wp, link_1, p_cycle_links, p_cycle_nodes, slot_list
-        with open("/Users/nhungtrinh/Work/bidirectional-eon/out/res.txt", "a") as f:
+        with open("C:/Users/tctrinh/Desktop/research/bidirectional-eon/out/res.txt", "a") as f:
             f.write(f"NEW-Khong tim thay duong di \n")
             f.write(f"PRESENTED PROTECTED LIGHTPATH {self.vt.print_light_paths()} \n")
             f.write(f"GRAPH {self.pt.get_graph().edges(data=True)} \n")
@@ -248,7 +248,7 @@ class BfsRSA(RSA):
             backup_paths = self.get_backup_path(flow, pcycle, links)
             return True, best_path, links, slot_list, backup_paths
 
-        with open("/Users/nhungtrinh/Work/bidirectional-eon/out/res.txt", "a") as f:
+        with open("C:/Users/tctrinh/Desktop/research/bidirectional-eon/out/res.txt", "a") as f:
             f.write(f"OLD-KHong tim thay duong di \n")
             f.write(f"PRESENTED LIGHTPATH {self.vt.print_light_paths()} \n")
             f.write(f"GRAPH {self.pt.get_graph().edges(data=True)} \n")
@@ -312,7 +312,7 @@ class BfsRSA(RSA):
             demand: int
     ) -> Tuple[List[List[bool]], Optional[Tuple[int, List[int]]]]:
         lst_cop = [row.copy() for row in lst]
-        with open("/Users/nhungtrinh/Work/bidirectional-eon/out/res.txt", "a") as f:
+        with open("C:/Users/tctrinh/Desktop/research/bidirectional-eon/out/res.txt", "a") as f:
             f.write(f"LST {lst} \n")
         row = lst[core_idx]
         original_false_indices = list(range(start, end + 1))
@@ -349,7 +349,7 @@ class BfsRSA(RSA):
                     for j in range(i, i + demand):
                         r[j] = False
                     return lst, (c_idx, list(range(i, i + demand)))
-        with open("/Users/nhungtrinh/Work/bidirectional-eon/out/res.txt", "a") as f:
+        with open("C:/Users/tctrinh/Desktop/research/bidirectional-eon/out/res.txt", "a") as f:
             f.write(f"Khong EXTEND duoc P-CYCLE \n")
         print("Khong EXTEND duoc P-CYCLE")
         return lst, None

@@ -127,7 +127,7 @@ class Simulator:
                 print(f"{sim_config_file} -> Load {forced_load}: Running the simulation number {seed}")
 
                 # with open("C:/Users/tctrinh/Desktop/research/bidirectional-eon/out/stats.txt", "a") as f:
-                with open("/Users/nhungtrinh/Work/bidirectional-eon/out/stats.txt", "a") as f:
+                with open("C:/Users/tctrinh/Desktop/research/bidirectional-eon/out/stats.txt", "a") as f:
                     f.write(f"{sim_config_file} -> Load {forced_load}: Running the simulation number {seed} \n")
                 SimulationRunner(cp, events)
                 if Simulator.verbose:
