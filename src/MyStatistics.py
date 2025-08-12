@@ -39,6 +39,10 @@ class MyStatistics:
         self.sim_time = 0.0
         self.data_transmitted = 0.0
 
+        # PCycle
+        self.num_p_cycles = 0
+        self.num_p_cycles_reused = 0
+
         # Modulation
         self.avg_bits_per_symbol = 0.0
         self.avg_bits_per_symbol_count = 0
@@ -162,7 +166,10 @@ class MyStatistics:
         # average_crosstalk /= self.pt.get_num_links()
         # self.plotter.add_dot_to_graph("avgcrosstalk", self.load, average_crosstalk)
         fragmentation_mean /= self.pt.get_num_links()
-        # print("Fragmentation mean: ", fragmentation_mean)
+        print("Fragmentation mean: ", fragmentation_mean)
+        with open("/Users/nhungtrinh/Work/bidirectional-eon/out/stats.txt", "a") as f:
+            f.write(f"fragmentation, {self.load}, {fragmentation_mean} \n")
+        
         # self.plotter.add_dot_to_graph("fragmentation", self.load, fragmentation_mean)
         # mean_transponders = 0.0
         # for i in range(0, len(self.number_of_used_transponders), 1):
@@ -186,9 +193,13 @@ class MyStatistics:
         # if xtps != 0:
         #     self.plotter.add_dot_to_graph("xtps", self.load, xtps / links_xtps)
 
-    def accept_flow(self, flow: Flow, light_paths: LightPath) -> None:
+    def accept_flow(self, flow: Flow, light_paths: LightPath, p_reuse: bool) -> None:
         if self.number_arrivals > self.min_number_arrivals:
             self.accepted += 1
+            if p_reuse:
+                self.num_p_cycles_reused += 1
+            else:
+                self.num_p_cycles += 1
             links = len(flow.get_links()) + 1
             self.plotter.add_dot_to_graph("modulation", self.load, flow.get_modulation_level())
             self.plotter.add_dot_to_graph("hops", self.load, links)
@@ -238,10 +249,11 @@ class MyStatistics:
                 f = event.get_flow()
                 if f.is_accepted():
                     self.number_of_used_transponders[f.get_source()][f.get_destination()] -= 1
-            if self.number_arrivals % 100 == 0:
+            # if self.number_arrivals % 100 == 0:
+            #     self.calculate_periodical_statistics()
+            if self.number_arrivals % 25000 == 0:
                 self.calculate_periodical_statistics()
-            if self.number_arrivals % 5000 == 0:
-                print("MyStatistics: 5000")
+                print("MyStatistics: 25000")
         except Exception as e:
             print("Error in MyStatistics: ", e)
 
@@ -284,6 +296,11 @@ class MyStatistics:
 
         with open("/Users/nhungtrinh/Work/bidirectional-eon/out/stats.txt", "a") as f:
             f.write(stats)
+            f.write("\n")
+
+        with open("/Users/nhungtrinh/Work/bidirectional-eon/out/stats.txt", "a") as f:
+            f.write(f"P-cycles: {self.num_p_cycles}\n")
+            f.write(f"P-cycles reused: {self.num_p_cycles_reused}\n")
             f.write("\n")
 
         return stats

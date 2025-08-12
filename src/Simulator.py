@@ -120,6 +120,8 @@ class Simulator:
                 cp = ControlPlane(self.rsa, events, rsa_module, pt, vt, traffic)
                 if Simulator.verbose:
                     print("(4) Done. (", round((time.time_ns() - begin) * 1e-9, 3), " sec)")
+                    with open("/Users/nhungtrinh/Work/bidirectional-eon/out/stats.txt", "a") as f:
+                        f.write(f"(4) Done. {round((time.time_ns() - begin) * 1e-9, 3)} sec \n")
 
                 begin = time.time_ns()
                 if Simulator.verbose:
@@ -132,9 +134,11 @@ class Simulator:
                 SimulationRunner(cp, events)
                 if Simulator.verbose:
                     print("(5) Done. (", round((time.time_ns() - begin) * 1e-9, 3), " sec)")
+                    with open("/Users/nhungtrinh/Work/bidirectional-eon/out/stats.txt", "a") as f:
+                        f.write(f"(5) Done. {round((time.time_ns() - begin) * 1e-9, 3)} sec \n")
 
-                # with open("/Users/nhungtrinh/Work/bidirectional-eon/out/stats.txt", "a") as f:
-                #     f.write(f"TIME: {round((time.time_ns() - begin_s) * 1e-9, 3)} sec \n")
+                with open("/Users/nhungtrinh/Work/bidirectional-eon/out/stats.txt", "a") as f:
+                    f.write(f"TIME: {round((time.time_ns() - begin_s) * 1e-9, 3)} sec \n")
 
                 if Simulator.verbose:
                     if forced_load == 0:

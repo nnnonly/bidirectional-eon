@@ -54,7 +54,7 @@ class BfsRSA(RSA):
                         check_path, working_path, links, slot_list, backup_paths = self.find_shortest_working_path(flow, p_cycle)
                         if check_path:
                             # create light path
-                            establish, lp_id = self.establish_connection(links, slot_list, flow, p_cycle)
+                            establish, lp_id = self.establish_connection(links, slot_list, flow, p_cycle, reused=True)
                             # add the light path to the p-cycle
                             protected_lp = ProtectingLightPath(id=lp_id, src=flow.get_source(),
                                                                dst=flow.get_destination(), links_id=links,
@@ -82,7 +82,7 @@ class BfsRSA(RSA):
         if check_available:
             p_cycle = self.establish_pcycle(p_cycle_links, p_cycle_nodes, slot_list_p_cycle, demand_in_slots)
             # create light path
-            establish, lp_id = self.establish_connection(working_links, working_slot_list, flow, p_cycle)
+            establish, lp_id = self.establish_connection(working_links, working_slot_list, flow, p_cycle, reused=False)
             protect_lp = ProtectingLightPath(id=lp_id, src=flow.get_source(),
                                              dst=flow.get_destination(),
                                              links_id=working_links, fss=demand_in_slots,
@@ -97,13 +97,13 @@ class BfsRSA(RSA):
         self.cp.block_flow(flow.get_id())
         return
 
-    def establish_connection(self, links: List[int], slot_list: List[Slot], flow: Flow, pcycle: PCycle):
+    def establish_connection(self, links: List[int], slot_list: List[Slot], flow: Flow, pcycle: PCycle, reused: bool):
         id = self.vt.create_light_path(flow, links, slot_list, 0, pcycle)
         if id >= 0:
             lps = self.vt.get_light_path(id)
             flow.set_links(links)
             flow.set_slot_list(slot_list)
-            self.cp.accept_flow(flow.get_id(), lps)
+            self.cp.accept_flow(flow.get_id(), lps, reused)
             # print("ADD", self.vt.print_light_paths())
             return True, id
         else:

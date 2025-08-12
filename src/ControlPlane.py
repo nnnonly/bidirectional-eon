@@ -19,6 +19,7 @@ from src.rsa.FIPP import FIPP
 from src.rsa.PP import PP
 from src.rsa.NewRSA import NewRSA
 from src.rsa.BfsRSA import BfsRSA
+from src.rsa.FIPPFlex import FIPPFlex
 
 class ControlPlane(ControlPlaneForRSA):
     def __init__(self, xml: ET.Element, event_scheduler: EventScheduler, rsa_module: str, pt: PhysicalTopology,
@@ -39,6 +40,7 @@ class ControlPlane(ControlPlaneForRSA):
             # self.rsa = NewRSA()
             self.rsa = BfsRSA()
             # self.rsa = FIPP()
+            # self.rsa = FIPPFlex()
             self.rsa.simulation_interface(xml, pt, vt, self, traffic)
         except Exception as e:
             print("Error in ControlPlane: ", e)
@@ -56,7 +58,7 @@ class ControlPlane(ControlPlaneForRSA):
     def get_flow(self, id: int) -> Flow:
         return self.active_flows.get(id)
 
-    def accept_flow(self, id: int, light_paths: LightPath) -> bool:
+    def accept_flow(self, id: int, light_paths: LightPath, p_reuse: bool) -> bool:
         if id < 0:
             raise ValueError("Invalid ID")
         if not id in self.active_flows:
@@ -69,7 +71,7 @@ class ControlPlane(ControlPlaneForRSA):
         self.add_flow_to_pt(flow, light_paths)
         self.mapped_flows[flow] = light_paths
         self.tr.accept_flow(flow, light_paths)
-        self.st.accept_flow(flow, light_paths)
+        self.st.accept_flow(flow, light_paths, p_reuse)
         flow.set_accepted(True)
         return True
 
