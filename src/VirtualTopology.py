@@ -66,7 +66,7 @@ class VirtualTopology:
         for p_cycle in self.p_cycles:
             # print(f'Cycle Links: {p_cycle.get_cycle_links()}, Protected Light Paths: {len(p_cycle.get_protected_lightpaths())}')
             sum_protect += len(p_cycle.get_protected_lightpaths())
-        with open("/Users/nhungtrinh/Work/bidirectional-eon/out/res.txt", "a") as f:
+        with open("C:/Users/tctrinh/Desktop/research/bidirectional-eon/out/res.txt", "a") as f:
             f.write(f"Total Protected Light Paths: {sum_protect} \n")
         print(f'Total Protected Light Paths: {sum_protect}, {num_lp}')
         # if num_lp < 5:

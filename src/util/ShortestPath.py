@@ -14,7 +14,7 @@ class ShortestPath():
         Returns a list of links to be removed from the graph based on the pcycle and flow.
         """
         new_graph = self.pt.get_graph().copy()
-        filtered = {k: v for k, v in pcycle.get_id_links().items() if len(v) >= 2}
+        filtered = {k: v for k, v in pcycle.get_id_links().items()}
         for k, v in filtered.items():
             total_length = sum(path.get_fss() for path in v)
             if k in pcycle.get_cycle_links() and total_length + demand_in_slots > pcycle.get_reserved_slots():
